@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>QR Heart Surprise</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    :root {
+      --bg: #08080d;
+      --bg2: #150711;
+      --red: #ff2f68;
+      --red-soft: #ff7fa2;
+      --red-deep: #d81b50;
+      --white: #ffffff;
+      --shadow: 0 0 18px rgba(255, 47, 104, 0.55);
+    }
+
+    html, body {
+      margin: 0;
+      width: 100%;
+      min-height: 100%;
+      background:
+        radial-gradient(circle at top, rgba(255,47,104,0.12), transparent 32%),
+        radial-gradient(circle at bottom, rgba(255,127,162,0.10), transparent 30%),
+        linear-gradient(180deg, var(--bg2), var(--bg));
+      font-family: Arial, Helvetica, sans-serif;
+      color: var(--white);
+      overflow: hidden;
+    }
+
+    body {
+      display: grid;
+      place-items: center;
+      padding: 10px;
+    }
+
+    .scene {
+      position: relative;
+      width: min(96vw, 430px);
+      height: min(94vh, 860px);
+      aspect-ratio: 9 / 16;
+      border-radius: 28px;
+      overflow: hidden;
+      background: linear-gradient(180deg, #090910 0%, #040408 100%);
+      border: 1px solid rgba(255,255,255,0.08);
+      box-shadow: 0 25px 80px rgba(0,0,0,0.55);
+      isolation: isolate;
+    }
+
+    .stars,
+    .matrix,
+    .screen,
+    .floating-hearts,
+    .collage,
+    .intro {
+      position: absolute;
+      inset: 0;
+    }
+
+    .stars {
+      z-index: 1;
+    }
+
+    .stars::before,
+    .stars::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background-image:
+        radial-gradient(circle, rgba(255,255,255,0.9) 1px, transparent 1.6px),
+        radial-gradient(circle, rgba(255,255,255,0.55) 1px, transparent 1.8px);
+      background-size: 90px 90px, 140px 140px;
+      background-position: 0 0, 40px 55px;
+      opacity: .50;
+      animation: twinkle 4s linear infinite;
+    }
+
+    .stars::after {
+      transform: scale(1.15);
+      opacity: .22;
+      animation-duration: 7s;
+    }
+
+    .topbar {
+      position: absolute;
+      top: 12px;
+      left: 0;
+      right: 0;
+      text-align: center;
+      font-size: 12px;
+      color: rgba(255,255,255,.74);
+      z-index: 30;
+      font-weight: 700;
+      letter-spacing: .4px;
+      pointer-events: none;
+    }
+
+    .intro {
+      z-index: 20;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(180deg, rgba(8,8,13,.24), rgba(8,8,13,.90));
+      transition: opacity .8s ease, visibility .8s ease;
+      padding: 20px;
+    }
+
+    .intro.hidden {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    .intro-box {
+      width: min(88%, 340px);
+      padding: 18px 18px 22px;
+      border-radius: 24px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.10);
+      backdrop-filter: blur(8px);
+      text-align: center;
+      box-shadow: 0 18px 45px rgba(0,0,0,.35);
+    }
+
+    .intro-title {
+      font-size: 15px;
+      font-weight: 800;
+      letter-spacing: .8px;
+      margin-bottom: 8px;
+    }
+
+    .intro-sub {
+      font-size: 12px;
+      line-height: 1.45;
+      color: rgba(255,255,255,.78);
+      margin-bottom: 18px;
+    }
+
+    .heart-qr-wrap {
+      display: grid;
+      place-items: center;
+      margin: 8px auto 16px;
+    }
+
+    .heart-qr {
+      position: relative;
+      width: 170px;
+      height: 150px;
+      transform: rotate(-45deg);
+      background: linear-gradient(135deg, #fff 0%, #ffe5ec 100%);
+      border: 5px solid var(--red);
+      box-shadow:
+        0 0 0 6px rgba(255,47,104,.14),
+        0 0 26px rgba(255,47,104,.28),
+        0 16px 40px rgba(0,0,0,.28);
+      cursor: pointer;
+      transition: transform .25s ease, box-shadow .25s ease;
+      animation: pulseGlow 1.9s ease-in-out infinite;
+      overflow: hidden;
+      display: grid;
+      place-items: center;
+    }
+
+    .heart-qr::before,
+    .heart-qr::after {
+      content: "";
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, #fff 0%, #ffe5ec 100%);
+      border: 5px solid var(--red);
+      border-radius: 50%;
+      box-sizing: border-box;
+    }
+
+    .heart-qr::before {
+      top: -50%;
+      left: 0;
+    }
+
+    .heart-qr::after {
+      top: 0;
+      left: 50%;
+    }
+
+    .heart-qr:hover,
+    .heart-qr:active {
+      transform: rotate(-45deg) scale(1.03);
+    }
+
+    .heart-qr-grid {
+      position: relative;
+      z-index: 2;
+      width: 74%;
+      height: 74%;
+      display: grid;
+      grid-template-columns: repeat(13, 1fr);
+      grid-template-rows: repeat(13, 1fr);
+      gap: 2px;
+      transform: rotate(45deg);
+    }
+
+    .sq {
+      background: transparent;
+      border-radius: 2px;
+    }
+
+    .sq.on {
+      background: var(--red-deep);
+    }
+
+    .sq.eye {
+      background: transparent;
+      border: 3px solid var(--red-deep);
+      border-radius: 4px;
+      position: relative;
+    }
+
+    .sq.eye::after {
+      content: '';
+      position: absolute;
+      inset: 24%;
+      background: var(--red-deep);
+      border-radius: 2px;
+    }
+
+    .scan-line {
+      position: absolute;
+      z-index: 3;
+      left: 12%;
+      right: 12%;
+      height: 4px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, transparent, var(--red), transparent);
+      box-shadow: 0 0 12px rgba(255,47,104,.8);
+      animation: scan 2.2s linear infinite;
+      opacity: .95;
+      transform: rotate(45deg);
+    }
+
+    .tap-label {
+      display: inline-block;
+      padding: 10px 14px;
+      border-radius: 999px;
+      background: rgba(255,47,104,0.14);
+      border: 1px solid rgba(255,47,104,0.35);
+      color: #ffdce7;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .6px;
+    }
+
+    .matrix {
+      z-index: 2;
+      opacity: 0;
+      transition: opacity .7s ease;
+      background:
+        linear-gradient(180deg, rgba(0,0,0,0.10), rgba(0,0,0,0.45)),
+        repeating-linear-gradient(
+          90deg,
+          transparent 0 12px,
+          rgba(255,47,104,0.06) 12px 13px
+        );
+    }
+
+    .matrix.active {
+      opacity: 1;
+    }
+
+    .matrix .col {
+      position: absolute;
+      top: -140%;
+      width: 14px;
+      color: var(--red);
+      font-size: 13px;
+      line-height: 13px;
+      text-shadow: var(--shadow);
+      white-space: pre;
+      opacity: 0.9;
+      animation: fall linear infinite;
+      font-family: monospace;
+    }
+
+    .floating-hearts {
+      z-index: 4;
+      pointer-events: none;
+    }
+
+    .floating-hearts span {
+      position: absolute;
+      bottom: -40px;
+      color: var(--red-soft);
+      font-size: 14px;
+      opacity: 0;
+      animation: rise 6s linear infinite;
+    }
+
+    .screen {
+      z-index: 5;
+      display: grid;
+      place-items: center;
+      padding: 28px;
+    }
+
+    .center {
+      position: relative;
+      width: 100%;
+      height: 100%;
+    }
+
+    .count,
+    .message,
+    .heart,
+    .mascot {
+      opacity: 0;
+      transform: scale(.8);
+      transition: .45s ease;
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      translate: -50% -50%;
+      width: max-content;
+      text-align: center;
+      max-width: 86%;
+    }
+
+    .show {
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    .count {
+      font-size: clamp(56px, 12vw, 88px);
+      font-weight: 800;
+      color: var(--red);
+      text-shadow: var(--shadow);
+    }
+
+    .message {
+      font-size: clamp(28px, 7vw, 54px);
+      font-weight: 900;
+      letter-spacing: 2px;
+      line-height: 1.05;
+      color: var(--red-soft);
+      text-shadow: var(--shadow);
+      white-space: pre-line;
+    }
+
+    .heart {
+      font-size: 86px;
+      color: var(--red-soft);
+      filter: drop-shadow(0 0 18px rgba(255,47,104,.7));
+    }
+
+    .mascot {
+      font-size: 72px;
+      animation: floaty 2.2s ease-in-out infinite;
+    }
+
+    .card-stack {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      pointer-events: none;
+      z-index: 7;
+      padding: 18px;
+    }
+
+    .wish-card {
+      position: absolute;
+      width: min(86%, 340px);
+      max-height: 74%;
+      overflow: hidden;
+      background: rgba(255,255,255,0.96);
+      color: #444;
+      border-radius: 18px;
+      padding: 16px;
+      box-shadow: 0 20px 50px rgba(0,0,0,.35);
+      border: 1px solid rgba(255,255,255,.6);
+      opacity: 0;
+      transform: translateY(20px) scale(.95);
+      transition: .6s ease;
+    }
+
+    .wish-card.show {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+
+    .wish-title {
+      font-size: 14px;
+      color: #b33b65;
+      text-align: center;
+      margin-bottom: 12px;
+      font-family: Georgia, serif;
+      font-weight: 700;
+    }
+
+    .wish-text {
+      background: #fff4f7;
+      border-radius: 12px;
+      padding: 12px;
+      font-size: 14px;
+      line-height: 1.45;
+      margin-bottom: 12px;
+      border: 1px solid rgba(0,0,0,0.06);
+      text-align: center;
+    }
+
+    .media-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .media-grid img,
+    .media-grid video,
+    .full-video {
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      object-fit: cover;
+      border-radius: 14px;
+      border: 2px solid rgba(255,255,255,.84);
+      box-shadow: 0 8px 20px rgba(0,0,0,.12);
+      background: linear-gradient(135deg, #ffd7eb, #ffdff2, #fff);
+      display: block;
+    }
+
+    .full-video {
+      aspect-ratio: 9 / 16;
+      margin-top: 10px;
+    }
+
+    .collage {
+      z-index: 6;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity .7s ease;
+    }
+
+    .collage.show {
+      opacity: 1;
+    }
+
+    .mini {
+      position: absolute;
+      width: clamp(60px, 16vw, 84px);
+      aspect-ratio: 1 / 1;
+      border-radius: 16px;
+      object-fit: cover;
+      border: 3px solid rgba(255,255,255,0.9);
+      box-shadow:
+        0 0 0 4px rgba(255,47,104,0.18),
+        0 12px 30px rgba(0,0,0,0.35),
+        0 0 16px rgba(255,47,104,0.35);
+      transform: translate(-50%, -50%) scale(.6);
+      opacity: 0;
+      animation: popIn .65s forwards;
+      background: #fff;
+    }
+
+    .hint {
+      position: absolute;
+      left: 50%;
+      bottom: 14px;
+      transform: translateX(-50%);
+      z-index: 12;
+      font-size: 11px;
+      color: rgba(255,255,255,.68);
+      text-align: center;
+      width: 92%;
+      line-height: 1.35;
+      pointer-events: none;
+    }
+
+    @keyframes fall {
+      from { transform: translateY(0); }
+      to { transform: translateY(230%); }
+    }
+
+    @keyframes twinkle {
+      0%, 100% { opacity: .25; }
+      50% { opacity: .6; }
+    }
+
+    @keyframes floaty {
+      0%,100% { transform: translateY(0) scale(1); }
+      50% { transform: translateY(-10px) scale(1.03); }
+    }
+
+    @keyframes rise {
+      0% { transform: translateY(0) scale(.8); opacity: 0; }
+      15% { opacity: .9; }
+      100% { transform: translateY(-110vh) scale(1.3); opacity: 0; }
+    }
+
+    @keyframes popIn {
+      0% { opacity: 0; transform: translate(-50%, -50%) scale(.4) rotate(-8deg); }
+      100% { opacity: 1; transform: translate(-50%, -50%) scale(1) rotate(0deg); }
+    }
+
+    @keyframes pulseGlow {
+      0%,100% { box-shadow: 0 0 0 6px rgba(255,47,104,.12), 0 0 24px rgba(255,47,104,.22), 0 16px 40px rgba(0,0,0,.28); }
+      50% { box-shadow: 0 0 0 8px rgba(255,47,104,.18), 0 0 34px rgba(255,47,104,.40), 0 16px 40px rgba(0,0,0,.34); }
+    }
+
+    @keyframes scan {
+      0% { top: 22%; opacity: .4; }
+      50% { top: 72%; opacity: 1; }
+      100% { top: 22%; opacity: .4; }
+    }
+
+    @media (max-width: 420px) {
+      .scene { border-radius: 22px; }
+      .wish-card { width: min(88%, 320px); padding: 14px; }
+      .heart-qr { width: 150px; height: 132px; }
+      .intro-box { width: min(92%, 330px); }
+    }
+  </style>
+</head>
+<body>
+  <div class="scene">
+    <div class="topbar">QR HEART SURPRISE</div>
+
+    <div class="stars"></div>
+
+    <div class="intro" id="intro">
+      <div class="intro-box">
+        <div class="intro-title">SCAN / TAP THE HEART QR</div>
+        <div class="intro-sub">
+          Clique sur le cœur rouge pour ouvrir le message surprise.
+        </div>
+
+        <div class="heart-qr-wrap">
+          <div class="heart-qr" id="heartQr" title="Ouvrir le message">
+            <div class="heart-qr-grid" id="heartQrGrid"></div>
+            <div class="scan-line"></div>
+          </div>
+        </div>
+
+        <div class="tap-label">TOUCHER POUR OUVRIR</div>
+      </div>
+    </div>
+
+    <div class="matrix" id="matrix"></div>
+    <div class="floating-hearts" id="floatingHearts"></div>
+
+    <div class="screen">
+      <div class="center">
+        <div class="count" id="count"></div>
+        <div class="message" id="message"></div>
+        <div class="heart" id="heart">❤</div>
+        <div class="mascot" id="mascot">🎂</div>
+      </div>
+    </div>
+
+    <div class="card-stack">
+      <div class="wish-card" id="card1">
+        <div class="wish-title">Happy Birthday Daniel ❤️</div>
+        <div class="media-grid">
+          <img src="assets/photos/photo1.jpg" alt="photo 1">
+          <img src="assets/photos/photo2.jpg" alt="photo 2">
+        </div>
+      </div>
+
+      <div class="wish-card" id="card2">
+        <div class="wish-text">Que cette journée soit remplie d’amour, de joie et de beaux souvenirs. ❤️</div>
+        <div class="media-grid">
+          <video src="assets/videos/video1.mp4" muted playsinline preload="metadata"></video>
+          <img src="assets/photos/photo3.jpg" alt="photo 3">
+        </div>
+      </div>
+
+      <div class="wish-card" id="card3">
+        <div class="wish-title">Un petit souvenir en vidéo 🎥</div>
+        <video class="full-video" src="assets/videos/video1.mp4" controls playsinline preload="metadata"></video>
+      </div>
+    </div>
+
+    <div class="collage" id="collage"></div>
+
+    <div class="hint">
+      Depuis que tu es dans ma vie <b>chaque jour est plus beau</b> et <b>ne change pour rien au monde </b>.
+      <br>
+      joyeux anniversaire DANIEL AMANI, je t’aime plus que tout. ❤️
+    </div>
+  </div>
+
+  <script>
+    const intro = document.getElementById('intro');
+    const heartQr = document.getElementById('heartQr');
+    const heartQrGrid = document.getElementById('heartQrGrid');
+    const matrix = document.getElementById('matrix');
+    const floatingHearts = document.getElementById('floatingHearts');
+    const count = document.getElementById('count');
+    const message = document.getElementById('message');
+    const heart = document.getElementById('heart');
+    const mascot = document.getElementById('mascot');
+    const collage = document.getElementById('collage');
+
+    const card1 = document.getElementById('card1');
+    const card2 = document.getElementById('card2');
+    const card3 = document.getElementById('card3');
+
+    const card2Video = card2.querySelector('video');
+    const card3Video = card3.querySelector('video');
+
+    const photoList = [
+      'assets/photos/photo1.jpg',
+      'assets/photos/photo2.jpg',
+      'assets/photos/photo3.jpg'
+    ];
+
+    const qrPattern = [
+      'EEEE001010000',
+      'E00E110101000',
+      'E00E001010110',
+      'EEEE101001000',
+      '0010101110010',
+      '1101000101100',
+      '0010111010010',
+      '1010001101001',
+      '0011010010110',
+      '1100101001000',
+      '0001010110110',
+      '1110010001010',
+      '0010101100101'
+    ];
+
+    const timers = [];
+
+    function later(ms, fn) {
+      const id = setTimeout(fn, ms);
+      timers.push(id);
+    }
+
+    function clearTimers() {
+      while (timers.length) clearTimeout(timers.pop());
+    }
+
+    function safePlay(videoEl) {
+      if (!videoEl) return;
+      const p = videoEl.play();
+      if (p && typeof p.catch === 'function') p.catch(() => {});
+    }
+
+    function stopVideo(videoEl) {
+      if (!videoEl) return;
+      videoEl.pause();
+      try { videoEl.currentTime = 0; } catch (e) {}
+    }
+
+    function buildHeartQR() {
+      heartQrGrid.innerHTML = '';
+      qrPattern.forEach((row) => {
+        [...row].forEach((cell) => {
+          const div = document.createElement('div');
+          div.className = 'sq';
+          if (cell === '1') div.classList.add('on');
+          if (cell === 'E') div.classList.add('eye');
+          heartQrGrid.appendChild(div);
+        });
+      });
+    }
+
+    function createMatrix() {
+      matrix.innerHTML = '';
+      const total = 28;
+      const chars = '01';
+      for (let i = 0; i < total; i++) {
+        const col = document.createElement('div');
+        col.className = 'col';
+        col.style.left = `${i * (100 / total)}%`;
+        col.style.animationDuration = `${3 + Math.random() * 4}s`;
+        col.style.animationDelay = `${Math.random() * -4}s`;
+        let text = '';
+        for (let j = 0; j < 90; j++) {
+          text += chars[Math.floor(Math.random() * chars.length)] + '\n';
+        }
+        col.textContent = text;
+        matrix.appendChild(col);
+      }
+    }
+
+    function createHearts() {
+      floatingHearts.innerHTML = '';
+      for (let i = 0; i < 18; i++) {
+        const h = document.createElement('span');
+        h.textContent = Math.random() > 0.5 ? '❤' : '♥';
+        h.style.left = `${Math.random() * 100}%`;
+        h.style.animationDelay = `${Math.random() * 6}s`;
+        h.style.animationDuration = `${4 + Math.random() * 4}s`;
+        h.style.fontSize = `${10 + Math.random() * 14}px`;
+        floatingHearts.appendChild(h);
+      }
+    }
+
+    function clearAll() {
+      clearTimers();
+      count.classList.remove('show');
+      message.classList.remove('show');
+      heart.classList.remove('show');
+      mascot.classList.remove('show');
+      card1.classList.remove('show');
+      card2.classList.remove('show');
+      card3.classList.remove('show');
+      collage.classList.remove('show');
+      collage.innerHTML = '';
+      count.textContent = '';
+      message.textContent = '';
+      matrix.classList.remove('active');
+      stopVideo(card2Video);
+      stopVideo(card3Video);
+    }
+
+    function showText(el, text) {
+      el.textContent = text;
+      el.classList.add('show');
+    }
+
+    function hideText(el) {
+      el.classList.remove('show');
+      later(220, () => {
+        el.textContent = '';
+      });
+    }
+
+    function createHeartCollage() {
+      collage.innerHTML = '';
+      const positions = [
+        [50, 27],
+        [38, 19], [62, 19],
+        [28, 29], [45, 30], [55, 30], [72, 29],
+        [22, 42], [36, 42], [50, 45], [64, 42], [78, 42],
+        [28, 57], [40, 60], [50, 66], [60, 60], [72, 57],
+        [37, 74], [50, 79], [63, 74]
+      ];
+
+      positions.forEach((pos, index) => {
+        const img = document.createElement('img');
+        img.className = 'mini';
+        img.src = photoList[index % photoList.length];
+        img.alt = `memory ${index + 1}`;
+        img.style.left = `${pos[0]}%`;
+        img.style.top = `${pos[1]}%`;
+        img.style.animationDelay = `${index * 0.08}s`;
+        collage.appendChild(img);
+      });
+
+      collage.classList.add('show');
+    }
+
+    function startSequence() {
+      clearAll();
+      matrix.classList.add('active');
+
+      later(600, () => showText(count, '3'));
+      later(1600, () => { hideText(count); showText(count, '2'); });
+      later(2600, () => { hideText(count); showText(count, '1'); });
+      later(3600, () => hideText(count));
+
+      later(4300, () => showText(message, 'HAPPY'));
+      later(5600, () => { hideText(message); showText(message, 'BIRTHDAY'); });
+      later(7000, () => { hideText(message); showText(message, 'TO'); });
+      later(8200, () => { hideText(message); showText(message, 'MY LOVE'); });
+      later(9500, () => { hideText(message); heart.classList.add('show'); });
+
+      later(11000, () => {
+        heart.classList.remove('show');
+        matrix.classList.remove('active');
+        mascot.classList.add('show');
+      });
+
+      later(12900, () => mascot.classList.remove('show'));
+
+      later(13600, () => card1.classList.add('show'));
+      later(17600, () => card1.classList.remove('show'));
+
+      later(18400, () => {
+        card2.classList.add('show');
+        safePlay(card2Video);
+      });
+
+      later(22800, () => {
+        card2.classList.remove('show');
+        stopVideo(card2Video);
+      });
+
+      later(23600, () => {
+        card3.classList.add('show');
+        safePlay(card3Video);
+      });
+
+      later(29200, () => {
+        card3.classList.remove('show');
+        stopVideo(card3Video);
+      });
+
+      later(30000, () => createHeartCollage());
+    }
+
+    heartQr.addEventListener('click', () => {
+      intro.classList.add('hidden');
+      startSequence();
+    });
+
+    buildHeartQR();
+    createMatrix();
+    createHearts();
+  </script>
+</body>
+</html>
